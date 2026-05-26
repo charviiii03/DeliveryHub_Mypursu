@@ -1,21 +1,23 @@
 CREATE TABLE IF NOT EXISTS customers (
     customer_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(150) NOT NULL,
+    full_name VARCHAR(50) NOT NULL,
     phone_number VARCHAR(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS addresses (
     address_id INT AUTO_INCREMENT PRIMARY KEY,
 
-    address_line TEXT NOT NULL,
+    address_line1 VARCHAR(255) NOT NULL,
 
-    city VARCHAR(100),
+    address_line2 VARCHAR(255),
 
-    state VARCHAR(100),
+    city VARCHAR(50),
 
-    country VARCHAR(100),
+    state_name VARCHAR(50),
 
-    country_code VARCHAR(5) NOT NULL,
+    state_code VARCHAR(10),
+
+    country VARCHAR(50),
 
     postal_code VARCHAR(20)
 
