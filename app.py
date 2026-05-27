@@ -1,4 +1,8 @@
-# generates unique ids
+
+# run flask server only when this file is executed directly
+if __name__ == "__main__":
+    app.run(debug=True)
+    # generates unique ids
 import uuid
 
 # generates secure random tokens
@@ -16,8 +20,45 @@ from db import get_db_connection
 app = Flask(__name__)
 
 
+def log_auth_attempt(application_id, endpoint, status, reason=None, ip_address=None, request_details=None):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    sql = """
+    INSERT INTO authentication_logs
+    (application_id, endpoint, status, reason, ip_address, request_details)
+    VALUES (%s, %s, %s, %s, %s, %s)
+    """
+
+    cursor.execute(sql, (
+        application_id,
+        endpoint,
+        status,
+        reason,
+        ip_address,
+        request_details
+    ))
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+
 # common function to check application authentication
-def check_application_auth(application_id, application_token):
+def check_application_auth(application_id, application_token, endpoint):
+    ip_address = request.remote_addr
+    request_details = f"method={request.method}, path={request.path}"
+
+    if not application_id or not application_token:
+        log_auth_attempt(
+            application_id or "unknown",
+            endpoint,
+            "failure",
+            "application id or token missing",
+            ip_address,
+            request_details
+        )
+        return None
 
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
@@ -36,25 +77,49 @@ def check_application_auth(application_id, application_token):
     connection.close()
 
     if not application:
+        log_auth_attempt(
+            application_id,
+            endpoint,
+            "failure",
+            "application not found, expired, or inactive",
+            ip_address,
+            request_details
+        )
         return None
 
     if not check_password_hash(application["application_token"], application_token):
+        log_auth_attempt(
+            application_id,
+            endpoint,
+            "failure",
+            "invalid token",
+            ip_address,
+            request_details
+        )
         return None
+
+    log_auth_attempt(
+        application_id,
+        endpoint,
+        "success",
+        None,
+        ip_address,
+        request_details
+    )
 
     return application
 
-#Checks: application ID, application token, expiry date
+
+# Checks: application ID, application token, expiry date
 @app.route("/generate-label", methods=["POST"])
 def generate_label():
-
     data = request.get_json()
 
     application_id = data.get("application_id") if data else None
     application_token = data.get("application_token") if data else None
 
-    application = check_application_auth(application_id, application_token)
+    application = check_application_auth(application_id, application_token, "/generate-label")
 
-    # if application == None, no matching application was found if not application:
     if not application:
         return jsonify({
             "status": "invalid",
@@ -66,23 +131,16 @@ def generate_label():
         "message": "label generated successfully"
     }), 200
 
-#Returns valid/invalid application
+
+# Returns valid/invalid application
 @app.route("/validate-auth", methods=["POST"])
 def validate_auth():
-    # get request data
     data = request.get_json()
 
-    # get authentication values from request
     application_id = data.get("application_id") if data else None
     application_token = data.get("application_token") if data else None
 
-    if not application_id or not application_token:
-        return jsonify({
-            "status": "invalid",
-            "reason": "application id or token missing"
-        }), 400
-
-    application = check_application_auth(application_id, application_token)
+    application = check_application_auth(application_id, application_token, "/validate-auth")
 
     if application:
         return jsonify({
@@ -95,9 +153,9 @@ def validate_auth():
         "reason": "invalid or expired application"
     }), 401
 
-@app.route("/admin/create-application")
-def signup():
 
+@app.route("/admin/create-application", methods=["POST"])
+def signup():
     data = request.get_json()
 
     application_name = data.get("application_name")
@@ -107,8 +165,8 @@ def signup():
     application_token = secrets.token_urlsafe(32)
 
     hashed_token = generate_password_hash(application_token)
-    # this converts token into encrypted/hashed form, 
-    # original token is protected even if database leaks 
+    # this converts token into encrypted/hashed form,
+    # original token is protected even if database leaks
 
     expiry_date = datetime.now() + timedelta(days=90)
 
@@ -143,9 +201,9 @@ def signup():
         "expiry_date": expiry_date.strftime("%Y-%m-%d")
     }), 201
 
+
 @app.route("/admin/applications", methods=["GET"])
 def view_applications():
-
     # connect to database
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
@@ -169,9 +227,9 @@ def view_applications():
         "applications": applications
     }), 200
 
+
 @app.route("/admin/update-status", methods=["PUT"])
 def update_status():
-
     # get request data
     data = request.get_json()
 
@@ -203,16 +261,16 @@ def update_status():
         "message": "application status updated"
     }), 200
 
+
 @app.route("/admin/auth-logs", methods=["GET"])
 def view_auth_logs():
-
     # connect to database
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
     # get authentication logs
     cursor.execute("""
-        SELECT application_id, request_time, status, reason, ip_address
+        SELECT application_id, endpoint, request_time, status, reason, ip_address, request_details
         FROM authentication_logs
         ORDER BY request_time DESC
     """)
@@ -230,9 +288,9 @@ def view_auth_logs():
         "logs": logs
     }), 200
 
+
 @app.route("/admin/update-expiry", methods=["PUT"])
 def update_expiry():
-
     # get request data
     data = request.get_json()
 
@@ -264,9 +322,9 @@ def update_expiry():
         "message": "expiry date updated"
     }), 200
 
+
 @app.route("/signin", methods=["POST"])
 def signin():
-
     # get request data
     data = request.get_json()
 
@@ -274,38 +332,14 @@ def signin():
     application_id = data.get("application_id")
     application_token = data.get("application_token")
 
-    # connect to database
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
+    # use shared authentication helper
+    application = check_application_auth(application_id, application_token, "/signin")
 
-    # find active application
-    sql = """
-    SELECT * FROM applications
-    WHERE application_id = %s
-    AND expiry_date >= CURDATE()
-    AND is_active = TRUE
-    """
-
-    # execute query
-    cursor.execute(sql, (application_id,))
-    application = cursor.fetchone()
-
-    # close database connection
-    cursor.close()
-    connection.close()
-
-    # check if application exists
+    # check if application exists and token is valid
     if not application:
         return jsonify({
             "status": "invalid",
-            "reason": "application not found or expired"
-        }), 401
-
-    # verify hashed token
-    if not check_password_hash(application["application_token"], application_token):
-        return jsonify({
-            "status": "invalid",
-            "reason": "invalid token"
+            "reason": "application not found, expired, inactive, or token invalid"
         }), 401
 
     # successful signin
@@ -314,6 +348,7 @@ def signin():
         "message": "signin successful"
     }), 200
 
-#run flask server only when this file is executed directly
+
+# run flask server only when this file is executed directly
 if __name__ == "__main__":
     app.run(debug=True)
