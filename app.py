@@ -106,6 +106,8 @@ def signup():
     application_token = secrets.token_urlsafe(32)
 
     hashed_token = generate_password_hash(application_token)
+    # this converts token into encrypted/hashed form, 
+    # original token is protected even if database leaks 
 
     expiry_date = datetime.now() + timedelta(days=90)
 
