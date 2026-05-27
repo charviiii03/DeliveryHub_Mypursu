@@ -146,19 +146,24 @@ def signup():
 @app.route("/admin/applications", methods=["GET"])
 def view_applications():
 
+    # connect to database
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
+    # get all application details
     cursor.execute("""
         SELECT application_id, application_name, user_email, expiry_date, is_active
         FROM applications
     """)
 
+    # fetch all applications
     applications = cursor.fetchall()
 
+    # close database connection
     cursor.close()
     connection.close()
 
+    # return applications response
     return jsonify({
         "status": "success",
         "applications": applications
@@ -167,25 +172,32 @@ def view_applications():
 @app.route("/admin/update-status", methods=["PUT"])
 def update_status():
 
+    # get request data
     data = request.get_json()
 
+    # get application id and active status
     application_id = data.get("application_id")
     is_active = data.get("is_active")
 
+    # connect to database
     connection = get_db_connection()
     cursor = connection.cursor()
 
+    # update application status
     cursor.execute("""
         UPDATE applications
         SET is_active = %s
         WHERE application_id = %s
     """, (is_active, application_id))
 
+    # save changes
     connection.commit()
 
+    # close database connection
     cursor.close()
     connection.close()
 
+    # success response
     return jsonify({
         "status": "success",
         "message": "application status updated"
@@ -194,48 +206,59 @@ def update_status():
 @app.route("/admin/auth-logs", methods=["GET"])
 def view_auth_logs():
 
+    # connect to database
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
+    # get authentication logs
     cursor.execute("""
         SELECT application_id, request_time, status, reason, ip_address
         FROM authentication_logs
         ORDER BY request_time DESC
     """)
 
+    # fetch all log records
     logs = cursor.fetchall()
 
+    # close database connection
     cursor.close()
     connection.close()
 
+    # return logs response
     return jsonify({
         "status": "success",
         "logs": logs
     }), 200
 
-
 @app.route("/admin/update-expiry", methods=["PUT"])
 def update_expiry():
 
+    # get request data
     data = request.get_json()
 
+    # get application id and new expiry date
     application_id = data.get("application_id")
     new_expiry_date = data.get("expiry_date")
 
+    # connect to database
     connection = get_db_connection()
     cursor = connection.cursor()
 
+    # update expiry date
     cursor.execute("""
         UPDATE applications
         SET expiry_date = %s
         WHERE application_id = %s
     """, (new_expiry_date, application_id))
 
+    # save changes
     connection.commit()
 
+    # close database connection
     cursor.close()
     connection.close()
 
+    # success response
     return jsonify({
         "status": "success",
         "message": "expiry date updated"
@@ -244,14 +267,18 @@ def update_expiry():
 @app.route("/signin", methods=["POST"])
 def signin():
 
+    # get request data
     data = request.get_json()
 
+    # get application credentials
     application_id = data.get("application_id")
     application_token = data.get("application_token")
 
+    # connect to database
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
+    # find active application
     sql = """
     SELECT * FROM applications
     WHERE application_id = %s
@@ -259,24 +286,29 @@ def signin():
     AND is_active = TRUE
     """
 
+    # execute query
     cursor.execute(sql, (application_id,))
     application = cursor.fetchone()
 
+    # close database connection
     cursor.close()
     connection.close()
 
+    # check if application exists
     if not application:
         return jsonify({
             "status": "invalid",
             "reason": "application not found or expired"
         }), 401
 
+    # verify hashed token
     if not check_password_hash(application["application_token"], application_token):
         return jsonify({
             "status": "invalid",
             "reason": "invalid token"
         }), 401
 
+    # successful signin
     return jsonify({
         "status": "valid",
         "message": "signin successful"
