@@ -66,21 +66,46 @@ CREATE TABLE IF NOT EXISTS shipment_tracking (
 
 CREATE TABLE IF NOT EXISTS applications (
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     application_id VARCHAR(100) UNIQUE NOT NULL,
+
     application_token VARCHAR(255) NOT NULL,
+
     application_name VARCHAR(100),
+
     user_email VARCHAR(100),
+
+    phone_number VARCHAR(20),
+
     expiry_date DATE,
-    active_status BOOLEAN DEFAULT TRUE,
+
+    is_active BOOLEAN DEFAULT TRUE,
+
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE
+
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
 CREATE TABLE IF NOT EXISTS authentication_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    application_id VARCHAR(100),
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    application_id VARCHAR(100) NOT NULL,
+
+    endpoint VARCHAR(150) NOT NULL,
+
     request_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20),
-    reason TEXT,
-    ip_address VARCHAR(100)
-);
+
+    status ENUM('success', 'failure') NOT NULL,
+
+    reason VARCHAR(255),
+
+    ip_address VARCHAR(100),
+
+    request_details TEXT
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
