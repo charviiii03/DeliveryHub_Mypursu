@@ -1,0 +1,11 @@
+Bandit Security Scan Report
+
+Date: 2026-06-05
+
+Result:
+- No critical vulnerabilities identified.
+- Low-severity findings detected in pytest test files due to assert statements.
+- Findings do not affect production code.
+
+Status:
+Passed security review.

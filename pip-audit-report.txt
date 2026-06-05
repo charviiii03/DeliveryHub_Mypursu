@@ -1,0 +1,6 @@
+pip-audit Security Scan Report
+
+Date: 2026-06-05
+
+Result:
+No known vulnerabilities found in installed dependencies.

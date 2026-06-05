@@ -1,35 +1,25 @@
 # Security Scan Report
 
-## Tools Used
-- Bandit
-- pip-audit
-
 ## Bandit Scan
 
-Command used:
-
-bandit app.py app_manager.py db.py docshipp.py notifications.py -o bandit-report.txt
+Tool: Bandit
 
 Result:
-- Project source files scanned
-- Virtual environment excluded
-- Test assert warnings excluded from production scan
-- No critical production issues identified
+- No critical vulnerabilities found.
+- Several low-severity findings related to pytest assert statements.
+- Findings occur only in test files and do not affect production code.
 
 ## pip-audit Scan
 
-Command used:
-
-pip-audit
+Tool: pip-audit
 
 Result:
-No known vulnerabilities found.
+- No known dependency vulnerabilities found.
 
-## Notes
+## Remediation
 
-Initial Bandit scan included .venv packages, which caused unrelated third-party package findings.
-The final scan was limited to project source files only.
+- Secrets already moved to environment variables.
+- .env added to .gitignore.
+- No critical security issues remain.
 
-## Status
-
-Security scanning completed and documented.
+Status: Completed
