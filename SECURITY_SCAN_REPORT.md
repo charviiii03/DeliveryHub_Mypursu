@@ -1,46 +1,35 @@
 # Security Scan Report
 
 ## Tools Used
-
 - Bandit
 - pip-audit
 
 ## Bandit Scan
 
-Command:
+Command used:
 
-```bash
-bandit -r . -x .venv,.venv-1,__pycache__,.pytest_cache
-```
+bandit app.py app_manager.py db.py docshipp.py notifications.py -o bandit-report.txt
 
 Result:
-
-- Scan completed successfully
-- Findings reviewed
-- No critical vulnerabilities identified
+- Project source files scanned
+- Virtual environment excluded
+- Test assert warnings excluded from production scan
+- No critical production issues identified
 
 ## pip-audit Scan
 
-Command:
+Command used:
 
-```bash
 pip-audit
-```
 
 Result:
+No known vulnerabilities found.
 
-```text
-No known vulnerabilities found
-```
+## Notes
 
-## Fixes Applied
-
-- Sensitive credentials moved to environment variables
-- MAIL_USERNAME removed from source code
-- MAIL_PASSWORD removed from source code
-- Database credentials moved to .env
-- .env added to .gitignore
+Initial Bandit scan included .venv packages, which caused unrelated third-party package findings.
+The final scan was limited to project source files only.
 
 ## Status
 
-Security scanning integrated and documented.
+Security scanning completed and documented.
