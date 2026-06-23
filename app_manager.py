@@ -6,7 +6,7 @@ import uuid
 # -----------------------------
 # Used to send application
 # credentials to applicants
-
+from flask import send_from_directory
 from notifications import (
     mail,
     send_onboarding_email,
@@ -16,6 +16,7 @@ from notifications import (
 
 import os
 
+from flask import send_file
 from dotenv import load_dotenv
 
 # generates secure random tokens
@@ -29,6 +30,7 @@ from werkzeug.security import (
     generate_password_hash,
     check_password_hash
 )
+
 from werkzeug.utils import secure_filename
 from notifications import send_label_notification
 
@@ -928,10 +930,16 @@ def admin_ui_upload_label():
     ))
 
     cursor.execute("""
-        UPDATE shipments
-        SET state = 'label_uploaded'
-        WHERE shipment_id = %s
-    """, (shipment_id,))
+    UPDATE shipments
+    SET
+        label_status='uploaded',
+        label_file_name=%s,
+        state='label_uploaded'
+    WHERE shipment_id=%s
+""", (
+    filename,
+    shipment_id
+))
 
     connection.commit()
 
@@ -977,14 +985,18 @@ def admin_ui_create_shipment():
     receiver_phone_code = request.form.get("receiver_phone_code")
     receiver_phone = request.form.get("receiver_phone")
 
-    from_address = request.form.get("from_address")
+    # HTML may send from_address OR from_address1
+    from_address1 = request.form.get("from_address1") or request.form.get("from_address")
+    from_address2 = request.form.get("from_address2")
     from_city = request.form.get("from_city")
     from_state = request.form.get("from_state")
     from_country = request.form.get("from_country")
     from_country_code = request.form.get("from_country_code")
     from_postal_code = request.form.get("from_postal_code")
 
-    to_address = request.form.get("to_address")
+    # HTML may send to_address OR to_address1
+    to_address1 = request.form.get("to_address1") or request.form.get("to_address")
+    to_address2 = request.form.get("to_address2")
     to_city = request.form.get("to_city")
     to_state = request.form.get("to_state")
     to_country = request.form.get("to_country")
@@ -995,8 +1007,10 @@ def admin_ui_create_shipment():
 
     def validate_country_rules(country, country_code, phone_code, phone_number, postal_code, user_type):
 
-        if country == "India":
+        if not country or not country_code or not phone_code or not phone_number or not postal_code:
+            return f"{user_type} details are missing"
 
+        if country == "India":
             if country_code != "IN":
                 return f"{user_type} country code must be IN"
 
@@ -1010,7 +1024,6 @@ def admin_ui_create_shipment():
                 return f"{user_type} India postal code must be 6 digits"
 
         elif country == "USA":
-
             if country_code != "US":
                 return f"{user_type} country code must be US"
 
@@ -1052,33 +1065,45 @@ def admin_ui_create_shipment():
     if receiver_error:
         return receiver_error
 
+    if not from_address1:
+        return "Sender address is required"
+
+    if not to_address1:
+        return "Receiver address is required"
+
     requestid = str(uuid.uuid4())
 
     connection = get_db_connection()
+
+    if connection is None:
+        return "Database connection failed"
+
     cursor = connection.cursor()
 
-    cursor.execute("""
-        INSERT INTO customers(full_name, phone_number, email)
-        VALUES (%s, %s, %s)
-    """, (
-        sender_name,
-        sender_phone_code + " " + sender_phone,
-        sender_email
-    ))
+    try:
+        cursor.execute("""
+            INSERT INTO customers(full_name, phone_number, email)
+            VALUES (%s, %s, %s)
+        """, (
+            sender_name,
+            sender_phone_code + " " + sender_phone,
+            sender_email
+        ))
 
-    sender_customer_id = cursor.lastrowid
+        sender_customer_id = cursor.lastrowid
 
-    cursor.execute("""
-        INSERT INTO customers(full_name, phone_number, email)
-        VALUES (%s, %s, %s)
-    """, (
-        receiver_name,
-        receiver_phone_code + " " + receiver_phone,
-        receiver_email
-    ))
+        cursor.execute("""
+            INSERT INTO customers(full_name, phone_number, email)
+            VALUES (%s, %s, %s)
+        """, (
+            receiver_name,
+            receiver_phone_code + " " + receiver_phone,
+            receiver_email
+        ))
 
-    receiver_customer_id = cursor.lastrowid
+        receiver_customer_id = cursor.lastrowid
 
+<<<<<<< HEAD
     cursor.execute("""
         INSERT INTO addresses(
            address_line1,
@@ -1099,9 +1124,32 @@ def admin_ui_create_shipment():
         from_country_code,
         from_postal_code
     ))
+=======
+        cursor.execute("""
+            INSERT INTO addresses(
+                address_line1,
+                address_line2,
+                city,
+                state_name,
+                country,
+                country_code,
+                postal_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            from_address1,
+            from_address2,
+            from_city,
+            from_state,
+            from_country,
+            from_country_code,
+            from_postal_code
+        ))
+>>>>>>> d3a7b39062f38787e0e036dc3924238877a5fefe
 
-    from_address_id = cursor.lastrowid
+        from_address_id = cursor.lastrowid
 
+<<<<<<< HEAD
     cursor.execute("""
         INSERT INTO addresses(
             address_line1,
@@ -1122,55 +1170,83 @@ def admin_ui_create_shipment():
         to_country_code,
         to_postal_code
     ))
+=======
+        cursor.execute("""
+            INSERT INTO addresses(
+                address_line1,
+                address_line2,
+                city,
+                state_name,
+                country,
+                country_code,
+                postal_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            to_address1,
+            to_address2,
+            to_city,
+            to_state,
+            to_country,
+            to_country_code,
+            to_postal_code
+        ))
+>>>>>>> d3a7b39062f38787e0e036dc3924238877a5fefe
 
-    to_address_id = cursor.lastrowid
+        to_address_id = cursor.lastrowid
 
-    cursor.execute("""
-        INSERT INTO shipments(
+        cursor.execute("""
+            INSERT INTO shipments(
+                requestid,
+                sender_customer_id,
+                receiver_customer_id,
+                from_address_id,
+                to_address_id,
+                service,
+                validation_status,
+                validation_reason,
+                state,
+                return_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
             requestid,
             sender_customer_id,
             receiver_customer_id,
             from_address_id,
             to_address_id,
             service,
-            validation_status,
-            validation_reason,
-            state,
-            return_code
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (
-        requestid,
-        sender_customer_id,
-        receiver_customer_id,
-        from_address_id,
-        to_address_id,
-        service,
-        "valid",
-        "No issues",
-        "initiated",
-        200
-    ))
+            "valid",
+            "No issues",
+            "initiated",
+            200
+        ))
 
-    shipment_id = cursor.lastrowid
+        shipment_id = cursor.lastrowid
 
-    cursor.execute("""
-        INSERT INTO shipment_tracking(
+        cursor.execute("""
+            INSERT INTO shipment_tracking(
+                shipment_id,
+                current_status
+            )
+            VALUES (%s, %s)
+        """, (
             shipment_id,
-            current_status
-        )
-        VALUES (%s, %s)
-    """, (
-        shipment_id,
-        "initiated"
-    ))
+            "initiated"
+        ))
 
-    connection.commit()
+        connection.commit()
 
-    cursor.close()
-    connection.close()
+    except Exception as e:
+        connection.rollback()
+        return f"Shipment creation failed: {str(e)}"
+
+    finally:
+        cursor.close()
+        connection.close()
 
     return admin_ui_shipments()
+
 @app.route("/admin-ui/applications")
 def admin_ui_applications():
 
@@ -1197,11 +1273,344 @@ def admin_ui_applications():
         "applications.html",
         applications=applications
     )
+
+@app.route("/admin-ui/view-label/<int:shipment_id>")
+def view_label(shipment_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT file_path, file_name
+        FROM shipment_labels
+        WHERE shipment_id = %s
+        ORDER BY label_id DESC
+        LIMIT 1
+    """, (shipment_id,))
+
+    label = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if not label:
+        return "No label uploaded for this shipment"
+
+    file_path = label["file_path"]
+
+    if not os.path.exists(file_path):
+        return "Label file not found on server"
+
+    return send_file(
+        file_path,
+        mimetype="application/pdf",
+        as_attachment=False
+    )
+
+@app.route("/admin-ui/create-shipment-from-text", methods=["GET", "POST"])
+def create_shipment_from_text():
+
+    if request.method == "GET":
+        return render_template("create_shipment_from_text.html")
+
+    import re
+
+    shipment_text = request.form.get("shipment_text")
+    service = request.form.get("service")
+
+    if not shipment_text:
+        return "Shipment text is required"
+
+    try:
+        sender_part = shipment_text.split("Receiver:")[0].replace("Sender:", "").strip()
+        receiver_part = shipment_text.split("Receiver:")[1].strip()
+
+        def extract_details(part):
+            lines = [line.strip() for line in part.split("\n") if line.strip()]
+
+            name = lines[0]
+
+            phone_match = re.search(r"Ph:\s*(\+\d+)\s*(\d+)", part)
+            phone_code = phone_match.group(1)
+            phone = phone_match.group(2)
+
+            email_match = re.search(
+                r"(?:gmail|email|mail)\s*:\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+                part,
+                re.IGNORECASE
+            )
+
+            email = email_match.group(1) if email_match else None
+
+            postal_match = re.search(r"\b(\d{5,6})\b", part)
+            postal_code = postal_match.group(1)
+
+            address_lines = []
+            for line in lines[1:]:
+                if not line.lower().startswith("ph:") and not line.lower().startswith(("gmail:", "email:", "mail:")):
+                    address_lines.append(line)
+
+            full_address = ", ".join(address_lines)
+
+            if phone_code == "+1":
+                country = "USA"
+                country_code = "US"
+            elif phone_code == "+91":
+                country = "India"
+                country_code = "IN"
+            else:
+                country = ""
+                country_code = ""
+
+            city = ""
+            state = ""
+
+            if country == "USA":
+                for line in address_lines:
+                    if postal_code in line:
+                        parts = [p.strip() for p in line.split(",")]
+                        if len(parts) >= 2:
+                            city = parts[0]
+                            state = parts[1]
+
+            if country == "India":
+                for line in address_lines:
+                    if postal_code in line:
+                        parts = [p.strip() for p in line.split(",")]
+                        if len(parts) >= 2:
+                            state = parts[-3] if len(parts) >= 3 else ""
+                            city = parts[-2]
+
+            return {
+                "name": name,
+                "email": email,
+                "phone_code": phone_code,
+                "phone": phone,
+                "address1": full_address,
+                "address2": "",
+                "city": city,
+                "state": state,
+                "country": country,
+                "country_code": country_code,
+                "postal_code": postal_code
+            }
+
+        sender = extract_details(sender_part)
+        receiver = extract_details(receiver_part)
+
+        sender_email = sender["email"] or f"sender_{uuid.uuid4().hex[:8]}@example.com"
+        receiver_email = receiver["email"] or f"receiver_{uuid.uuid4().hex[:8]}@example.com"
+
+        requestid = str(uuid.uuid4())
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            INSERT INTO customers(full_name, phone_number, email)
+            VALUES (%s, %s, %s)
+        """, (
+            sender["name"],
+            sender["phone_code"] + " " + sender["phone"],
+            sender_email
+        ))
+
+        sender_customer_id = cursor.lastrowid
+
+        cursor.execute("""
+            INSERT INTO customers(full_name, phone_number, email)
+            VALUES (%s, %s, %s)
+        """, (
+            receiver["name"],
+            receiver["phone_code"] + " " + receiver["phone"],
+            receiver_email
+        ))
+
+        receiver_customer_id = cursor.lastrowid
+
+        cursor.execute("""
+            INSERT INTO addresses(
+                address_line1,
+                address_line2,
+                city,
+                state_name,
+                country,
+                country_code,
+                postal_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            sender["address1"],
+            sender["address2"],
+            sender["city"],
+            sender["state"],
+            sender["country"],
+            sender["country_code"],
+            sender["postal_code"]
+        ))
+
+        from_address_id = cursor.lastrowid
+
+        cursor.execute("""
+            INSERT INTO addresses(
+                address_line1,
+                address_line2,
+                city,
+                state_name,
+                country,
+                country_code,
+                postal_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            receiver["address1"],
+            receiver["address2"],
+            receiver["city"],
+            receiver["state"],
+            receiver["country"],
+            receiver["country_code"],
+            receiver["postal_code"]
+        ))
+
+        to_address_id = cursor.lastrowid
+
+        cursor.execute("""
+            INSERT INTO shipments(
+                requestid,
+                sender_customer_id,
+                receiver_customer_id,
+                from_address_id,
+                to_address_id,
+                service,
+                validation_status,
+                validation_reason,
+                state,
+                return_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            requestid,
+            sender_customer_id,
+            receiver_customer_id,
+            from_address_id,
+            to_address_id,
+            service,
+            "valid",
+            "Created from text message",
+            "initiated",
+            200
+        ))
+
+        shipment_id = cursor.lastrowid
+
+        cursor.execute("""
+            INSERT INTO shipment_tracking(shipment_id, current_status)
+            VALUES (%s, %s)
+        """, (
+            shipment_id,
+            "initiated"
+        ))
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return admin_ui_shipments()
+
+    except Exception as e:
+        return f"Could not create shipment from text: {str(e)}"
+    
+@app.route("/admin-ui/edit-shipment/<int:shipment_id>", methods=["GET", "POST"])
+def edit_shipment(shipment_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if request.method == "GET":
+        cursor.execute("""
+            SELECT
+                s.shipment_id,
+                sender.customer_id AS sender_customer_id,
+                sender.full_name AS sender_name,
+                sender.email AS sender_email,
+                sender.phone_number AS sender_phone,
+                receiver.customer_id AS receiver_customer_id,
+                receiver.full_name AS receiver_name,
+                receiver.email AS receiver_email,
+                receiver.phone_number AS receiver_phone,
+                s.service
+            FROM shipments s
+            JOIN customers sender ON s.sender_customer_id = sender.customer_id
+            JOIN customers receiver ON s.receiver_customer_id = receiver.customer_id
+            WHERE s.shipment_id = %s
+        """, (shipment_id,))
+
+        shipment = cursor.fetchone()
+
+        cursor.close()
+        connection.close()
+
+        if not shipment:
+            return "Shipment not found"
+
+        return render_template("edit_shipment.html", shipment=shipment)
+
+    sender_name = request.form.get("sender_name")
+    sender_email = request.form.get("sender_email")
+    sender_phone = request.form.get("sender_phone")
+
+    receiver_name = request.form.get("receiver_name")
+    receiver_email = request.form.get("receiver_email")
+    receiver_phone = request.form.get("receiver_phone")
+
+    service = request.form.get("service")
+
+    try:
+        cursor.execute("""
+            SELECT sender_customer_id, receiver_customer_id
+            FROM shipments
+            WHERE shipment_id = %s
+        """, (shipment_id,))
+
+        ids = cursor.fetchone()
+
+        cursor.execute("""
+            UPDATE customers
+            SET full_name = %s, email = %s, phone_number = %s
+            WHERE customer_id = %s
+        """, (sender_name, sender_email, sender_phone, ids["sender_customer_id"]))
+
+        cursor.execute("""
+            UPDATE customers
+            SET full_name = %s, email = %s, phone_number = %s
+            WHERE customer_id = %s
+        """, (receiver_name, receiver_email, receiver_phone, ids["receiver_customer_id"]))
+
+        cursor.execute("""
+            UPDATE shipments
+            SET service = %s
+            WHERE shipment_id = %s
+        """, (service, shipment_id))
+
+        connection.commit()
+
+    except Exception as e:
+        connection.rollback()
+        return f"Shipment update failed: {str(e)}"
+
+    finally:
+        cursor.close()
+        connection.close()
+
+    return admin_ui_shipments()
+
 # -----------------------------
 # RUN APP MANAGER
 # -----------------------------
 if __name__ == "__main__":
     app.run(
         debug=True,
-        port=5001
+        port=5001,
+        host="0.0.0.0"
     )
