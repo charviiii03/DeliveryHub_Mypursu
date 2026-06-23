@@ -1484,6 +1484,77 @@ def edit_shipment(shipment_id):
 
     return admin_ui_shipments()
 
+@app.route("/admin-ui/delete-shipment/<int:shipment_id>", methods=["POST"])
+def delete_shipment(shipment_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Delete uploaded label records first
+        cursor.execute("""
+            DELETE FROM shipment_labels
+            WHERE shipment_id = %s
+        """, (shipment_id,))
+
+        # Delete tracking records
+        cursor.execute("""
+            DELETE FROM shipment_tracking
+            WHERE shipment_id = %s
+        """, (shipment_id,))
+
+        # Get related customer/address ids
+        cursor.execute("""
+            SELECT
+                sender_customer_id,
+                receiver_customer_id,
+                from_address_id,
+                to_address_id
+            FROM shipments
+            WHERE shipment_id = %s
+        """, (shipment_id,))
+
+        shipment = cursor.fetchone()
+
+        if not shipment:
+            return "Shipment not found"
+
+        # Delete shipment
+        cursor.execute("""
+            DELETE FROM shipments
+            WHERE shipment_id = %s
+        """, (shipment_id,))
+
+        # Delete related addresses
+        cursor.execute("""
+            DELETE FROM addresses
+            WHERE address_id IN (%s, %s)
+        """, (
+            shipment["from_address_id"],
+            shipment["to_address_id"]
+        ))
+
+        # Delete related customers
+        cursor.execute("""
+            DELETE FROM customers
+            WHERE customer_id IN (%s, %s)
+        """, (
+            shipment["sender_customer_id"],
+            shipment["receiver_customer_id"]
+        ))
+
+        connection.commit()
+
+    except Exception as e:
+        connection.rollback()
+        return f"Shipment deletion failed: {str(e)}"
+
+    finally:
+        cursor.close()
+        connection.close()
+
+    return admin_ui_shipments()
+
 # -----------------------------
 # RUN APP MANAGER
 # -----------------------------
