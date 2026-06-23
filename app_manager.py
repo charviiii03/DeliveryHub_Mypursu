@@ -31,11 +31,6 @@ from werkzeug.security import (
 )
 from werkzeug.utils import secure_filename
 from notifications import send_label_notification
-from notifications import (
-    mail,
-    send_application_credentials,
-    send_label_notification
-)
 
 from flask import Flask, request, jsonify, render_template
 from db import get_db_connection
@@ -1086,9 +1081,10 @@ def admin_ui_create_shipment():
 
     cursor.execute("""
         INSERT INTO addresses(
-            address_line,
+           address_line1,
+            address_line2,
             city,
-            state,
+            state_name,
             country,
             country_code,
             postal_code
@@ -1096,6 +1092,7 @@ def admin_ui_create_shipment():
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (
         from_address,
+        None,
         from_city,
         from_state,
         from_country,
@@ -1107,9 +1104,10 @@ def admin_ui_create_shipment():
 
     cursor.execute("""
         INSERT INTO addresses(
-            address_line,
+            address_line1,
+            address_line2,
             city,
-            state,
+            state_name,
             country,
             country_code,
             postal_code
@@ -1117,6 +1115,7 @@ def admin_ui_create_shipment():
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (
         to_address,
+        None,
         to_city,
         to_state,
         to_country,

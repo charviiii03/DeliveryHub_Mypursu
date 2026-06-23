@@ -102,25 +102,6 @@ def generate_label():
         }), 400
 
     # -----------------------------
-    # APPLICATION AUTHENTICATION
-    # -----------------------------
-
-    application_id = data.get("application_id")
-    application_token = data.get("application_token")
-
-    application = check_application_auth(
-        application_id,
-        application_token,
-        "/generate-label"
-    )
-
-    if not application:
-        return jsonify({
-            "status": "invalid",
-            "reason": "authentication failed"
-        }), 401
-
-    # -----------------------------
     # REQUIRED FIELDS
     # -----------------------------
 
