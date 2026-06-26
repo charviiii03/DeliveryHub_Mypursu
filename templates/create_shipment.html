@@ -38,7 +38,6 @@
 </head>
 
 <body>
-
 <div class="container mt-5 mb-5">
 
     <div class="card shadow p-4 col-md-9 mx-auto">
@@ -65,16 +64,15 @@
             </h5>
 
             <div class="mb-4">
-                <select class="form-select" name="application_id" required>
-                    <option value="">Select Application</option>
-
+               <select class="form-select" name="application_id" required>
                     {% for app in applications %}
-                    <option value="{{ app.id }}">
+                    <option
+                        value="{{ app.id }}"
+                        {% if app.application_name == 'DeliveryHub' %}selected{% endif %}>
                         {{ app.application_name }}
                     </option>
                     {% endfor %}
                 </select>
-            </div>
 
 
             <!-- Sender Details -->
@@ -104,53 +102,73 @@
                         required>
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <select
-                        class="form-select"
-                        id="sender_country"
-                        name="from_country"
-                        required>
+                <div class="row mb-3">
 
-                        <option value="USA" selected>USA</option>
-                        <option value="India">India</option>
+    <div class="row mb-3">
 
-                    </select>
-                </div>
+    <!-- Country -->
+    <div class="col-md-4">
 
-                <div class="col-md-4 mb-3">
-                    <input
-                        class="form-control"
-                        id="sender_country_code"
-                        name="from_country_code"
-                        value="US"
-                        readonly>
-                </div>
+        <select
+            id="sender_country"
+            name="from_country"
+            class="form-select">
 
-                <div class="col-md-4 mb-3">
-                    <input
-                        class="form-control"
-                        id="sender_phone_code"
-                        name="sender_phone_code"
-                        value="+1"
-                        readonly>
-                </div>
+            <option value="USA" selected>USA</option>
+            <option value="India">India</option>
 
-                <div class="col-md-6 mb-3">
-                    <input
-                        class="form-control"
-                        name="sender_phone"
-                        placeholder="Sender Phone Number"
-                        required>
-                </div>
+        </select>
 
-                <div class="col-md-6 mb-3">
-                    <input
-                        class="form-control"
-                        name="from_postal_code"
-                        placeholder="Postal Code"
-                        required>
-                </div>
+        <!-- Hidden field for backend -->
+        <input
+            type="hidden"
+            id="sender_country_code"
+            name="from_country_code"
+            value="US">
 
+    </div>
+
+    <!-- Phone -->
+    <div class="col-md-4">
+
+        <div class="input-group">
+
+            <span
+                class="input-group-text"
+                id="sender_phone_code">
+                +1
+            </span>
+
+            <input
+                type="hidden"
+                id="sender_phone_code_value"
+                name="sender_phone_code"
+                value="+1">
+
+            <input
+                type="text"
+                class="form-control"
+                name="sender_phone"
+                placeholder="Phone Number"
+                required>
+
+        </div>
+
+    </div>
+
+    <!-- Postal Code -->
+    <div class="col-md-4">
+
+        <input
+            type="text"
+            class="form-control"
+            name="from_postal_code"
+            placeholder="Postal Code"
+            required>
+
+    </div>
+
+</div>
                 <div class="col-md-12 mb-3">
                     <input
                         class="form-control"
@@ -203,53 +221,71 @@
                         required>
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <select
-                        class="form-select"
-                        id="receiver_country"
-                        name="to_country"
-                        required>
+               <div class="row mb-3">
 
-                        <option value="India" selected>India</option>
-                        <option value="USA">USA</option>
+    <!-- Country -->
+    <div class="col-md-4">
 
-                    </select>
-                </div>
+        <select
+            id="receiver_country"
+            name="to_country"
+            class="form-select">
 
-                <div class="col-md-4 mb-3">
-                    <input
-                        class="form-control"
-                        id="receiver_country_code"
-                        name="to_country_code"
-                        value="IN"
-                        readonly>
-                </div>
+            <option value="India" selected>India</option>
+            <option value="USA">USA</option>
 
-                <div class="col-md-4 mb-3">
-                    <input
-                        class="form-control"
-                        id="receiver_phone_code"
-                        name="receiver_phone_code"
-                        value="+91"
-                        readonly>
-                </div>
+        </select>
 
-                <div class="col-md-6 mb-3">
-                    <input
-                        class="form-control"
-                        name="receiver_phone"
-                        placeholder="Receiver Phone Number"
-                        required>
-                </div>
+        <!-- Hidden field for backend -->
+        <input
+            type="hidden"
+            id="receiver_country_code"
+            name="to_country_code"
+            value="IN">
 
-                <div class="col-md-6 mb-3">
-                    <input
-                        class="form-control"
-                        name="to_postal_code"
-                        placeholder="Postal Code"
-                        required>
-                </div>
+    </div>
 
+    <!-- Phone -->
+    <div class="col-md-4">
+
+        <div class="input-group">
+
+            <span
+                class="input-group-text"
+                id="receiver_phone_code">
+                +91
+            </span>
+
+            <input
+                type="hidden"
+                id="receiver_phone_code_value"
+                name="receiver_phone_code"
+                value="+91">
+
+            <input
+                type="text"
+                class="form-control"
+                name="receiver_phone"
+                placeholder="Phone Number"
+                required>
+
+        </div>
+
+    </div>
+
+    <!-- Postal Code -->
+    <div class="col-md-4">
+
+        <input
+            type="text"
+            class="form-control"
+            name="to_postal_code"
+            placeholder="Postal Code"
+            required>
+
+    </div>
+
+</div>
                 <div class="col-md-12 mb-3">
                     <input
                         class="form-control"
@@ -283,11 +319,45 @@
                 Shipment Details
             </h5>
 
-            <input
-                class="form-control mb-4"
-                name="service"
-                placeholder="Service e.g. Express International"
-                required>
+            <div class="mb-4">
+
+                <label class="form-label fw-bold">
+                    Shipment Type
+                </label>
+
+                <select
+                    class="form-select"
+                    name="service"
+                    required>
+
+                    <option value="US_TO_INDIA_DOCUMENT_EXPRESS" selected>
+                        USA → India Documents (Express)
+                    </option>
+
+                    <option value="US_TO_INDIA_DOCUMENT_ECONOMY">
+                        USA → India Documents (Economy)
+                    </option>
+
+                    <option value="US_TO_INDIA_PARCEL_EXPRESS">
+                        USA → India Parcel (Express)
+                    </option>
+
+                    <option value="US_TO_INDIA_PARCEL_PRIORITY">
+                        USA → India Parcel (Priority)
+                    </option>
+
+                    <option value="INDIA_TO_US_DOCUMENT_EXPRESS">
+                        India → USA Documents (Express)
+                    </option>
+
+                    <option value="INDIA_TO_US_PARCEL_PRIORITY">
+                        India → USA Parcel (Priority)
+                    </option>
+
+                </select>
+
+            </div>
+                
 
 
             <button class="btn btn-dark w-100" type="submit">
