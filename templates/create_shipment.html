@@ -168,12 +168,19 @@
             <div class="mb-4">
                 <label class="form-label fw-semibold">Shipment Type</label>
                 <select class="form-select" name="service" required>
-                    <option value="US_TO_INDIA_DOCUMENT_EXPRESS" selected>USA → India — Documents (Express)</option>
-                    <option value="US_TO_INDIA_DOCUMENT_ECONOMY">USA → India — Documents (Economy)</option>
-                    <option value="US_TO_INDIA_PARCEL_EXPRESS">USA → India — Parcel (Express)</option>
-                    <option value="US_TO_INDIA_PARCEL_PRIORITY">USA → India — Parcel (Priority)</option>
-                    <option value="INDIA_TO_US_DOCUMENT_EXPRESS">India → USA — Documents (Express)</option>
-                    <option value="INDIA_TO_US_PARCEL_PRIORITY">India → USA — Parcel (Priority)</option>
+                    <optgroup label="USA → India">
+                        <option value="US_TO_INDIA_DOCUMENT_EXPRESS" selected>Documents — Express</option>
+                        <option value="US_TO_INDIA_DOCUMENT_ECONOMY">Documents — Economy</option>
+                        <option value="US_TO_INDIA_PARCEL_EXPRESS">Parcel — Express</option>
+                        <option value="US_TO_INDIA_PARCEL_PRIORITY">Parcel — Priority</option>
+                    </optgroup>
+                    <optgroup label="India → USA">
+                        <option value="INDIA_TO_US_DOCUMENT_EXPRESS">Documents — Express</option>
+                        <option value="INDIA_TO_US_DOCUMENT_ECONOMY">Documents — Economy</option>
+                        <option value="INDIA_TO_US_PARCEL_PRIORITY">Parcel — Priority</option>
+                        <option value="INDIA_TO_US_MEDICINE_EXPRESS">Medicine — Express</option>
+                        <option value="INDIA_TO_US_MEDICINE_ECONOMY">Medicine — Economy</option>
+                    </optgroup>
                 </select>
             </div>
 
@@ -193,13 +200,45 @@
 </datalist>
 
 <script>
-    // Sender country change → update hidden code + phone prefix display
+    function updateServiceOptions() {
+        const senderCountry = document.getElementById("sender_country").value;
+        const serviceSelect = document.querySelector("select[name='service']");
+        const currentVal = serviceSelect.value;
+
+        serviceSelect.querySelectorAll("option").forEach(opt => {
+            const isMedicine = opt.value.includes("MEDICINE");
+            const isUSAtoIndia = opt.value.startsWith("US_TO_INDIA");
+            const isIndiaToUS = opt.value.startsWith("INDIA_TO_US");
+
+            if (senderCountry === "USA") {
+                // Hide India→USA options and medicine
+                opt.hidden = isIndiaToUS;
+                opt.disabled = isIndiaToUS;
+            } else {
+                // Hide USA→India options
+                opt.hidden = isUSAtoIndia;
+                opt.disabled = isUSAtoIndia;
+            }
+        });
+
+        // If current selection is now hidden, reset to first visible
+        const currentOpt = serviceSelect.querySelector(`option[value="${currentVal}"]`);
+        if (!currentOpt || currentOpt.hidden) {
+            const firstVisible = serviceSelect.querySelector("option:not([hidden])");
+            if (firstVisible) serviceSelect.value = firstVisible.value;
+        }
+    }
+
     document.getElementById("sender_country").addEventListener("change", function () {
         const isUSA = this.value === "USA";
         document.getElementById("sender_country_code").value   = isUSA ? "US"  : "IN";
         document.getElementById("sender_phone_code").value     = isUSA ? "+1"  : "+91";
         document.getElementById("sender_phone_prefix").textContent = isUSA ? "+1" : "+91";
+        updateServiceOptions();
     });
+
+    // Run on page load to set correct initial state
+    updateServiceOptions();
 
     // Receiver country change
     document.getElementById("receiver_country").addEventListener("change", function () {

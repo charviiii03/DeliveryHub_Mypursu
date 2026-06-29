@@ -51,12 +51,16 @@
         .person-email{font-size:11px;color:var(--text-muted);margin-top:1px;}
         .route-badge{background:#f1f5f9;color:#475569;padding:3px 9px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;}
 
-        .action-btn{padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600;text-decoration:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:opacity .15s;}
-        .action-btn:hover{opacity:.85;}
-        .ab-blue{background:#eff6ff;color:var(--accent);}
-        .ab-green{background:#f0fdf4;color:var(--success);}
-        .ab-yellow{background:#fffbeb;color:#b45309;}
-        .ab-gray{background:#f1f5f9;color:var(--text-muted);}
+        .menu-wrap{position:relative;display:inline-block;}
+        .menu-btn{background:#f1f5f9;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:700;letter-spacing:1px;transition:background .15s;}
+        .menu-btn:hover{background:#e2e8f0;color:var(--text-primary);}
+        .dropdown{display:none;position:absolute;right:0;top:calc(100% + 4px);background:white;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.08);min-width:140px;z-index:200;overflow:hidden;}
+        .dropdown.open{display:block;}
+        .dd-item{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:13px;font-weight:500;color:var(--text-primary);text-decoration:none;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .12s;}
+        .dd-item:hover{background:#f8fafc;}
+        .dd-item i{font-size:12px;width:14px;text-align:center;}
+        .dd-item.danger{color:var(--danger);}
+        .dd-divider{height:1px;background:var(--border);margin:4px 0;}
 
         .search-wrap{position:relative;}
         .search-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;}
@@ -179,24 +183,30 @@
                         {% endif %}
                     </td>
                     <td>
-                        <div class="d-flex flex-wrap gap-1">
-                            {% if shipment.label_status == "uploaded" %}
-                                <a href="/admin-ui/view-label/{{ shipment.shipment_id }}" target="_blank" class="action-btn ab-green">
-                                    <i class="fa-solid fa-eye"></i> View
+                        <div class="menu-wrap">
+                            <button class="menu-btn" onclick="toggleMenu(this)">•••</button>
+                            <div class="dropdown">
+                                {% if shipment.label_status == "uploaded" %}
+                                    <a href="/admin-ui/view-label/{{ shipment.shipment_id }}" target="_blank" class="dd-item">
+                                        <i class="fa-solid fa-eye"></i> View label
+                                    </a>
+                                    <a href="/admin-ui/upload-label?shipment_id={{ shipment.shipment_id }}" class="dd-item">
+                                        <i class="fa-solid fa-rotate"></i> Replace label
+                                    </a>
+                                {% elif shipment.validation_status == "valid" %}
+                                    <a href="/admin-ui/upload-label?shipment_id={{ shipment.shipment_id }}" class="dd-item">
+                                        <i class="fa-solid fa-upload"></i> Upload label
+                                    </a>
+                                {% else %}
+                                    <span class="dd-item" style="color:var(--text-muted);cursor:default;">
+                                        <i class="fa-solid fa-ban"></i> Invalid shipment
+                                    </span>
+                                {% endif %}
+                                <div class="dd-divider"></div>
+                                <a href="/admin-ui/edit-shipment/{{ shipment.shipment_id }}" class="dd-item">
+                                    <i class="fa-solid fa-pen"></i> Edit shipment
                                 </a>
-                                <a href="/admin-ui/upload-label?shipment_id={{ shipment.shipment_id }}" class="action-btn ab-yellow">
-                                    <i class="fa-solid fa-rotate"></i> Replace
-                                </a>
-                            {% elif shipment.validation_status == "valid" %}
-                                <a href="/admin-ui/upload-label?shipment_id={{ shipment.shipment_id }}" class="action-btn ab-blue">
-                                    <i class="fa-solid fa-upload"></i> Upload
-                                </a>
-                            {% else %}
-                                <span class="action-btn ab-gray">Invalid</span>
-                            {% endif %}
-                            <a href="/admin-ui/edit-shipment/{{ shipment.shipment_id }}" class="action-btn ab-gray">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </a>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -214,6 +224,19 @@ document.getElementById("searchInput").addEventListener("input", function () {
     document.querySelectorAll("#shipmentsTable tbody tr").forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(q) ? "" : "none";
     });
+});
+
+function toggleMenu(btn) {
+    const dd = btn.nextElementSibling;
+    const isOpen = dd.classList.contains("open");
+    document.querySelectorAll(".dropdown.open").forEach(d => d.classList.remove("open"));
+    if (!isOpen) dd.classList.add("open");
+}
+
+document.addEventListener("click", function(e) {
+    if (!e.target.closest(".menu-wrap")) {
+        document.querySelectorAll(".dropdown.open").forEach(d => d.classList.remove("open"));
+    }
 });
 </script>
 
