@@ -474,11 +474,16 @@ def admin_ui_create_shipment():
         cur  = conn.cursor(dictionary=True)
 
         # FIX Bug 3: use application_id not id
-        cur.execute(
-            """SELECT application_id, application_name
-               FROM applications WHERE is_active = TRUE
-               ORDER BY FIELD(application_name, 'DeliveryHub') DESC, application_name"""
-        )
+        cur.execute("""
+    SELECT
+        application_id,
+        application_name,
+        user_email,
+        phone_number
+    FROM applications
+    WHERE is_active = TRUE
+    ORDER BY application_name
+""")
         applications = cur.fetchall()
 
         cur.execute("SELECT customer_id, full_name, email, phone_number FROM customers ORDER BY full_name")
@@ -486,7 +491,12 @@ def admin_ui_create_shipment():
 
         cur.close()
         conn.close()
-        return render_template("create_shipment.html", applications=applications, customers=customers)
+
+        return render_template(
+            "create_shipment.html",
+            applications=applications,
+            customers=customers
+        )
 
     # POST — collect form data
     sender_name        = request.form.get("sender_name")
@@ -846,7 +856,209 @@ def admin_ui_extract_label():
         # Clean up temp file
         if os.path.exists(temp_path):
             os.remove(temp_path)
+@app.route("/admin-ui/create-shipment-from-text", methods=["GET", "POST"])
+def create_shipment_from_text():
 
+    if request.method == "GET":
+        return render_template("create_shipment_from_text.html")
+
+    import re
+
+    shipment_text = request.form.get("shipment_text")
+    service = request.form.get("service", "Express International")
+
+    if not shipment_text:
+        return "Shipment text is required", 400
+
+    try:
+        sender_part = shipment_text.split("Receiver:")[0].replace("Sender:", "").strip()
+        receiver_part = shipment_text.split("Receiver:")[1].strip()
+
+        def extract_details(part, person_type):
+            lines = [line.strip() for line in part.split("\n") if line.strip()]
+
+            name = lines[0]
+
+            phone_match = re.search(r"Ph:\s*(\+\d+)\s*(\d+)", part)
+            phone_code = phone_match.group(1) if phone_match else ""
+            phone = phone_match.group(2) if phone_match else ""
+
+            email_match = re.search(
+                r"(?:email|gmail|mail)\s*:\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+                part,
+                re.IGNORECASE
+            )
+
+            if email_match:
+                email = email_match.group(1)
+            else:
+                email = f"{person_type}_{uuid.uuid4().hex[:8]}@example.com"
+
+            postal_match = re.search(r"\b(\d{5,6})\b", part)
+            postal_code = postal_match.group(1) if postal_match else ""
+
+            address_lines = []
+            for line in lines[1:]:
+                if not line.lower().startswith("ph:") and "@" not in line:
+                    address_lines.append(line)
+
+            full_address = ", ".join(address_lines)
+
+            if phone_code == "+1":
+                country = "USA"
+                country_code = "US"
+            elif phone_code == "+91":
+                country = "India"
+                country_code = "IN"
+            else:
+                country = ""
+                country_code = ""
+
+            city = ""
+            state = ""
+
+            for line in address_lines:
+                if postal_code and postal_code in line:
+                    parts = [p.strip() for p in line.split(",")]
+
+                    if country == "USA" and len(parts) >= 2:
+                        city = parts[0]
+                        state = parts[1]
+
+                    elif country == "India" and len(parts) >= 2:
+                        city = parts[-2]
+                        state = parts[-3] if len(parts) >= 3 else ""
+
+            return {
+                "name": name,
+                "email": email,
+                "phone_code": phone_code,
+                "phone": phone,
+                "address": full_address,
+                "city": city,
+                "state": state,
+                "country": country,
+                "country_code": country_code,
+                "postal_code": postal_code
+            }
+
+        sender = extract_details(sender_part, "sender")
+        receiver = extract_details(receiver_part, "receiver")
+
+        requestid = str(uuid.uuid4())
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO customers(full_name, phone_number, email)
+            VALUES (%s, %s, %s)
+        """, (
+            sender["name"],
+            sender["phone_code"] + " " + sender["phone"],
+            sender["email"]
+        ))
+        sender_customer_id = cur.lastrowid
+
+        cur.execute("""
+            INSERT INTO customers(full_name, phone_number, email)
+            VALUES (%s, %s, %s)
+        """, (
+            receiver["name"],
+            receiver["phone_code"] + " " + receiver["phone"],
+            receiver["email"]
+        ))
+        receiver_customer_id = cur.lastrowid
+
+        cur.execute("""
+            INSERT INTO addresses(
+                address_line1,
+                address_line2,
+                city,
+                state_name,
+                country,
+                country_code,
+                postal_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            sender["address"],
+            None,
+            sender["city"],
+            sender["state"],
+            sender["country"],
+            sender["country_code"],
+            sender["postal_code"]
+        ))
+        from_address_id = cur.lastrowid
+
+        cur.execute("""
+            INSERT INTO addresses(
+                address_line1,
+                address_line2,
+                city,
+                state_name,
+                country,
+                country_code,
+                postal_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            receiver["address"],
+            None,
+            receiver["city"],
+            receiver["state"],
+            receiver["country"],
+            receiver["country_code"],
+            receiver["postal_code"]
+        ))
+        to_address_id = cur.lastrowid
+
+        cur.execute("""
+            INSERT INTO shipments(
+                requestid,
+                sender_customer_id,
+                receiver_customer_id,
+                from_address_id,
+                to_address_id,
+                service,
+                validation_status,
+                validation_reason,
+                state,
+                return_code
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            requestid,
+            sender_customer_id,
+            receiver_customer_id,
+            from_address_id,
+            to_address_id,
+            service,
+            "valid",
+            "Created from text message",
+            "initiated",
+            200
+        ))
+
+        shipment_id = cur.lastrowid
+
+        cur.execute("""
+            INSERT INTO shipment_tracking(shipment_id, current_status)
+            VALUES (%s, %s)
+        """, (
+            shipment_id,
+            "initiated"
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect(url_for("admin_ui_shipments"))
+
+    except Exception as e:
+        return f"Could not create shipment from text: {str(e)}", 500
 # --------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(host="0.0.0.0", debug=True, port=5001)

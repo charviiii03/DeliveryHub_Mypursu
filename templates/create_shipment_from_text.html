@@ -2,108 +2,451 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Add Shipment via Text — DeliveryHub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add via Text — DeliveryHub</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        :root{--sidebar-bg:#0f172a;--sidebar-w:240px;--accent:#3b82f6;--accent-dark:#1d4ed8;--page-bg:#f1f5f9;--card-bg:#ffffff;--text-primary:#0f172a;--text-muted:#64748b;--border:#e2e8f0;--radius:14px;}
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{font-family:'Inter',sans-serif;background:var(--page-bg);color:var(--text-primary);display:flex;min-height:100vh;}
-        .sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);min-height:100vh;display:flex;flex-direction:column;padding:24px 16px;position:fixed;top:0;left:0;z-index:100;}
-        .sidebar-brand{display:flex;align-items:center;gap:10px;padding:0 8px 28px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:20px;}
-        .brand-icon{width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;}
-        .brand-name{font-size:15px;font-weight:700;color:white;line-height:1.2;}
-        .brand-sub{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;}
-        .nav-label{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1.2px;text-transform:uppercase;padding:0 12px;margin-bottom:8px;}
-        .nav-link-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,.6);text-decoration:none;font-size:14px;font-weight:500;margin-bottom:2px;transition:all .18s;}
-        .nav-link-item i{width:18px;text-align:center;font-size:13px;}
-        .nav-link-item:hover{background:rgba(255,255,255,.07);color:white;}
-        .nav-link-item.active{background:var(--accent);color:white;}
-        .main{margin-left:var(--sidebar-w);flex:1;padding:32px;min-width:0;}
+        :root {
+            --sidebar-bg:#0f172a;
+            --sidebar-w:240px;
+            --accent:#3b82f6;
+            --accent-dark:#1d4ed8;
+            --page-bg:#f1f5f9;
+            --card-bg:#ffffff;
+            --text-primary:#0f172a;
+            --text-muted:#64748b;
+            --border:#e2e8f0;
+            --success:#16a34a;
+        }
 
-        .page-title{font-size:26px;font-weight:800;margin-bottom:4px;}
-        .page-subtitle{font-size:14px;color:var(--text-muted);margin-bottom:28px;}
+        * {
+            box-sizing:border-box;
+            margin:0;
+            padding:0;
+        }
 
-        .text-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px;max-width:680px;}
+        body {
+            font-family:'Inter',sans-serif;
+            background:var(--page-bg);
+            color:var(--text-primary);
+            display:flex;
+            min-height:100vh;
+        }
 
-        .info-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 15px;display:flex;gap:10px;margin-bottom:22px;}
-        .info-box i{color:#16a34a;margin-top:1px;flex-shrink:0;}
-        .info-box p{font-size:12px;color:#14532d;margin:0;line-height:1.6;}
+        .sidebar {
+            width:var(--sidebar-w);
+            background:var(--sidebar-bg);
+            min-height:100vh;
+            padding:24px 16px;
+            position:fixed;
+            top:0;
+            left:0;
+        }
 
-        .field-group{margin-bottom:20px;}
-        .field-label{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:7px;display:block;}
-        .field-hint{font-size:12px;color:var(--text-muted);margin-top:5px;}
-        .field-textarea{width:100%;min-height:200px;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text-primary);resize:vertical;line-height:1.6;transition:border .18s,box-shadow .18s;}
-        .field-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1);}
-        .field-select{width:100%;height:44px;border:1px solid var(--border);border-radius:10px;padding:0 13px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text-primary);background:white;transition:border .18s;}
-        .field-select:focus{outline:none;border-color:var(--accent);}
+        .sidebar-brand {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:0 8px 28px;
+            border-bottom:1px solid rgba(255,255,255,.08);
+            margin-bottom:20px;
+        }
 
-        .submit-btn{width:100%;height:46px;background:var(--text-primary);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .18s;font-family:'Inter',sans-serif;}
-        .submit-btn:hover{background:#1e293b;}
-        .back-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted);text-decoration:none;}
-        .back-link:hover{color:var(--accent);}
+        .brand-icon {
+            width:38px;
+            height:38px;
+            background:var(--accent);
+            border-radius:10px;
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+
+        .brand-name {
+            color:white;
+            font-size:15px;
+            font-weight:700;
+        }
+
+        .brand-sub {
+            font-size:10px;
+            color:rgba(255,255,255,.4);
+            letter-spacing:1px;
+            text-transform:uppercase;
+        }
+
+        .nav-label {
+            font-size:10px;
+            color:rgba(255,255,255,.3);
+            letter-spacing:1.2px;
+            text-transform:uppercase;
+            padding:0 12px;
+            margin-bottom:8px;
+        }
+
+        .nav-link-item {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:10px 12px;
+            border-radius:10px;
+            color:rgba(255,255,255,.6);
+            text-decoration:none;
+            font-size:14px;
+            font-weight:500;
+            margin-bottom:2px;
+        }
+
+        .nav-link-item i {
+            width:18px;
+            text-align:center;
+        }
+
+        .nav-link-item:hover,
+        .nav-link-item.active {
+            background:var(--accent);
+            color:white;
+        }
+
+        .main {
+            margin-left:var(--sidebar-w);
+            flex:1;
+            min-width:0;
+            padding:40px;
+
+            display:flex;
+            justify-content:flex-start;
+            align-items:center;
+            flex-direction:column;
+        }
+
+        .content-wrap {
+            width:100%;
+            max-width:720px;
+        }
+
+        .page-title {
+            font-size:30px;
+            font-weight:800;
+            margin-bottom:6px;
+        }
+
+        .page-subtitle {
+            font-size:15px;
+            color:var(--text-muted);
+            margin-bottom:28px;
+        }
+
+        .text-card {
+            background:var(--card-bg);
+            border:1px solid var(--border);
+            border-radius:22px;
+            overflow:hidden;
+            box-shadow:0 10px 35px rgba(15,23,42,.08);
+        }
+
+        .text-card-header {
+            background:linear-gradient(135deg,#2563eb,#06b6d4);
+            color:white;
+            padding:30px;
+        }
+
+        .header-icon {
+            width:54px;
+            height:54px;
+            background:rgba(255,255,255,.16);
+            border-radius:16px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:24px;
+            margin-bottom:14px;
+        }
+
+        .text-card-header h3 {
+            font-size:21px;
+            font-weight:800;
+            margin-bottom:6px;
+        }
+
+        .text-card-header p {
+            font-size:14px;
+            opacity:.9;
+            margin:0;
+        }
+
+        .text-card-body {
+            padding:30px;
+        }
+
+        .tip-box {
+            background:#ecfdf5;
+            border:1px solid #bbf7d0;
+            border-radius:14px;
+            padding:14px 16px;
+            display:flex;
+            gap:12px;
+            margin-bottom:24px;
+        }
+
+        .tip-box i {
+            color:var(--success);
+            margin-top:3px;
+            font-size:18px;
+        }
+
+        .tip-box p {
+            margin:0;
+            font-size:13px;
+            color:#166534;
+            line-height:1.5;
+        }
+
+        .field-label {
+            font-size:13px;
+            font-weight:700;
+            margin-bottom:8px;
+            display:block;
+        }
+
+        .textarea-box {
+            width:100%;
+            min-height:230px;
+            resize:vertical;
+            border:1px solid var(--border);
+            border-radius:14px;
+            padding:16px;
+            font-size:14px;
+            line-height:1.6;
+            font-family:'Inter',sans-serif;
+            outline:none;
+            transition:.18s;
+        }
+
+        .textarea-box:focus {
+            border-color:var(--accent);
+            box-shadow:0 0 0 4px rgba(59,130,246,.12);
+        }
+
+        .hint {
+            font-size:12px;
+            color:var(--text-muted);
+            margin-top:8px;
+            margin-bottom:22px;
+        }
+
+        .service-select {
+            width:100%;
+            height:48px;
+            border:1px solid var(--border);
+            border-radius:12px;
+            padding:0 14px;
+            font-size:14px;
+            background:white;
+            margin-bottom:22px;
+        }
+
+        .submit-btn {
+            width:100%;
+            height:50px;
+            background:var(--text-primary);
+            color:white;
+            border:none;
+            border-radius:12px;
+            font-size:15px;
+            font-weight:800;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:9px;
+            cursor:pointer;
+        }
+
+        .submit-btn:hover {
+            background:#1e293b;
+        }
+
+        .back-link {
+            display:block;
+            text-align:center;
+            margin-top:20px;
+            color:var(--text-muted);
+            text-decoration:none;
+            font-size:14px;
+            font-weight:500;
+        }
+
+        .back-link:hover {
+            color:var(--accent);
+        }
+
+        .example-box {
+            background:#f8fafc;
+            border:1px dashed #cbd5e1;
+            border-radius:14px;
+            padding:14px;
+            margin-bottom:22px;
+            font-size:12px;
+            color:#475569;
+            line-height:1.6;
+        }
+
+        .example-title {
+            font-weight:800;
+            color:#0f172a;
+            margin-bottom:6px;
+        }
     </style>
 </head>
+
 <body>
 
 <nav class="sidebar">
     <div class="sidebar-brand">
-        <div class="brand-icon"><i class="fa-solid fa-truck-fast"></i></div>
-        <div><div class="brand-name">DeliveryHub</div><div class="brand-sub">Admin Console</div></div>
+        <div class="brand-icon">
+            <i class="fa-solid fa-truck-fast"></i>
+        </div>
+        <div>
+            <div class="brand-name">DeliveryHub</div>
+            <div class="brand-sub">Admin Console</div>
+        </div>
     </div>
+
     <div class="nav-label">Menu</div>
-    <a href="/admin-ui" class="nav-link-item"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
-    <a href="/admin-ui/applications" class="nav-link-item"><i class="fa-solid fa-building"></i> Applications</a>
-    <a href="/admin-ui/auth-logs" class="nav-link-item"><i class="fa-solid fa-shield-halved"></i> Auth Logs</a>
-    <a href="/admin-ui/shipments" class="nav-link-item active"><i class="fa-solid fa-boxes-stacked"></i> Shipments</a>
-    <a href="/admin-ui/upload-label" class="nav-link-item"><i class="fa-solid fa-file-arrow-up"></i> Upload Label</a>
+
+    <a href="/admin-ui" class="nav-link-item">
+        <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </a>
+
+    <a href="/admin-ui/applications" class="nav-link-item">
+        <i class="fa-solid fa-building"></i> Applications
+    </a>
+
+    <a href="/admin-ui/auth-logs" class="nav-link-item">
+        <i class="fa-solid fa-shield-halved"></i> Auth Logs
+    </a>
+
+    <a href="/admin-ui/shipments" class="nav-link-item active">
+        <i class="fa-solid fa-boxes-stacked"></i> Shipments
+    </a>
+
+    <a href="/admin-ui/upload-label" class="nav-link-item">
+        <i class="fa-solid fa-file-arrow-up"></i> Upload Label
+    </a>
 </nav>
 
 <main class="main">
-    <div class="page-title">Add Shipment via Text</div>
-    <div class="page-subtitle">Paste raw sender and receiver details — the system will parse and create the shipment.</div>
 
-    <div class="text-card">
+    <div class="content-wrap">
 
-        <div class="info-box">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <p>Paste any text containing sender name, phone, address, receiver name, phone, address, and email. The system will extract the fields automatically.</p>
+        <div class="page-title">Add Shipment via Text</div>
+        <div class="page-subtitle">
+            Paste sender and receiver details. DeliveryHub will extract the shipment information automatically.
         </div>
 
-        <form method="POST" action="/admin-ui/create-shipment-from-text">
+        <div class="text-card">
 
-            <div class="field-group">
-                <label class="field-label" for="shipment_text">Shipment Message</label>
-                <textarea class="field-textarea" id="shipment_text" name="shipment_text"
-                          placeholder="Paste sender and receiver details here…" required></textarea>
-                <div class="field-hint">Include names, addresses, phone numbers, emails and any other details you have.</div>
+            <div class="text-card-header">
+                <div class="header-icon">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <h3>Smart Shipment Creator</h3>
+                <p>Convert plain text into a shipment request in one click.</p>
             </div>
 
-            <div class="field-group">
-                <label class="field-label" for="service">Service Type</label>
-                <select class="field-select" id="service" name="service" required>
-                    <option value="US_TO_INDIA_DOCUMENT_EXPRESS" selected>USA → India — Documents (Express)</option>
-                    <option value="US_TO_INDIA_DOCUMENT_ECONOMY">USA → India — Documents (Economy)</option>
-                    <option value="US_TO_INDIA_PARCEL_EXPRESS">USA → India — Parcel (Express)</option>
-                    <option value="US_TO_INDIA_PARCEL_PRIORITY">USA → India — Parcel (Priority)</option>
-                    <option value="INDIA_TO_US_DOCUMENT_EXPRESS">India → USA — Documents (Express)</option>
-                    <option value="INDIA_TO_US_PARCEL_PRIORITY">India → USA — Parcel (Priority)</option>
-                </select>
+            <div class="text-card-body">
+
+                <div class="tip-box">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <p>
+                        Include <strong>Sender:</strong> and <strong>Receiver:</strong> sections with name,
+                        phone, address, postal code, and email if available.
+                    </p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Example format:</div>
+                    Sender: John Smith<br>
+                    Ph: +1 9876543210<br>
+                    New York, NY, 10001<br>
+                    email: john@example.com<br><br>
+
+                    Receiver: Rahul Sharma<br>
+                    Ph: +91 9876543210<br>
+                    Hyderabad, Telangana, 500080<br>
+                    email: rahul@example.com
+                </div>
+
+                <form method="POST" action="/admin-ui/create-shipment-from-text">
+
+                    <label class="field-label" for="shipment_text">Shipment Message</label>
+
+                    <textarea
+                        class="textarea-box"
+                        id="shipment_text"
+                        name="shipment_text"
+                        placeholder="Paste sender and receiver details here..."
+                        required
+                    ></textarea>
+
+                    <div class="hint">
+                        The text should contain sender name, phone, address, receiver name, phone, address, and email if available.
+                    </div>
+
+                    <label class="field-label" for="service">Service Type</label>
+
+                    <select class="service-select" id="service" name="service" required>
+                        <option value="US_TO_INDIA_DOCUMENT_EXPRESS">
+                            USA → India — Documents (Express)
+                        </option>
+                        <option value="US_TO_INDIA_DOCUMENT_ECONOMY">
+                            USA → India — Documents (Economy)
+                        </option>
+                        <option value="US_TO_INDIA_PARCEL_EXPRESS">
+                            USA → India — Parcel (Express)
+                        </option>
+                        <option value="US_TO_INDIA_PARCEL_PRIORITY">
+                            USA → India — Parcel (Priority)
+                        </option>
+                        <option value="INDIA_TO_US_DOCUMENT_EXPRESS">
+                            India → USA — Documents (Express)
+                        </option>
+                        <option value="INDIA_TO_US_DOCUMENT_ECONOMY">
+                            India → USA — Documents (Economy)
+                        </option>
+                        <option value="INDIA_TO_US_PARCEL_PRIORITY">
+                            India → USA — Parcel (Priority)
+                        </option>
+                        <option value="INDIA_TO_US_MEDICINE_EXPRESS">
+                            India → USA — Medicine (Express)
+                        </option>
+                        <option value="INDIA_TO_US_MEDICINE_ECONOMY">
+                            India → USA — Medicine (Economy)
+                        </option>
+                    </select>
+
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        Create Shipment Automatically
+                    </button>
+
+                </form>
+
+                <a href="/admin-ui/shipments" class="back-link">
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+                    Back to Shipments
+                </a>
+
             </div>
-
-            <button type="submit" class="submit-btn">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Create Shipment Automatically
-            </button>
-
-        </form>
-
-        <a href="/admin-ui/shipments" class="back-link">
-            <i class="fa-solid fa-arrow-left me-1"></i> Back to Shipments
-        </a>
+        </div>
 
     </div>
+
 </main>
 
 </body>

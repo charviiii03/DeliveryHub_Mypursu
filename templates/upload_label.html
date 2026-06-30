@@ -21,11 +21,27 @@
         .nav-link-item i{width:18px;text-align:center;font-size:13px;}
         .nav-link-item:hover{background:rgba(255,255,255,.07);color:white;}
         .nav-link-item.active{background:var(--accent);color:white;}
-        .main{margin-left:var(--sidebar-w);flex:1;padding:32px;min-width:0;}
+        .main{
+    margin-left:var(--sidebar-w);
+    flex:1;
+    min-width:0;
+
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+
+    padding:40px;
+}
         .page-title{font-size:26px;font-weight:800;margin-bottom:4px;}
         .page-subtitle{font-size:14px;color:var(--text-muted);margin-bottom:28px;}
-
-        .upload-card{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;overflow:hidden;max-width:540px;box-shadow:0 8px 30px rgba(15,23,42,.08);}
+        .upload-card{
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:20px;
+    overflow:hidden;
+    max-width:540px;
+    box-shadow:0 8px 30px rgba(15,23,42,.08);
+}
         .upload-header{background:linear-gradient(135deg,#0369a1,#0ea5e9);color:white;padding:28px 30px;text-align:center;}
         .upload-header i{font-size:44px;margin-bottom:12px;display:block;opacity:.9;}
         .upload-header h3{font-size:18px;font-weight:700;margin-bottom:4px;}
@@ -75,8 +91,16 @@
 </nav>
 
 <main class="main">
-    <div class="page-title">Upload Shipment Label</div>
-    <div class="page-subtitle">Attach a PDF label — it will be emailed to the receiver automatically.</div>
+
+<div style="width:100%;max-width:620px;">
+
+    <div class="page-title">
+        Upload Shipment Label
+    </div>
+
+    <div class="page-subtitle">
+        Attach a PDF label — it will be emailed to the receiver automatically.
+    </div>
 
     <div class="upload-card">
         <div class="upload-header">
@@ -130,7 +154,6 @@
             <a href="/admin-ui/shipments" class="back-link">
                 <i class="fa-solid fa-arrow-left me-1"></i> Back to Shipments
             </a>
-        </div>
     </div>
 </main>
 

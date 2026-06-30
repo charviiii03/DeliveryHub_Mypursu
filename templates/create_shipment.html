@@ -24,7 +24,7 @@
                 <h2 class="fw-bold mb-1">Create Shipment Request</h2>
                 <p class="text-muted mb-0">Admin can create India ↔ USA shipment requests.</p>
             </div>
-            <a href="/admin-ui/shipments" class="btn btn-outline-dark">Back</a>
+            <a href="/admin-ui/shipments" class="btn btn-light border px-4 py-2 rounded-3">Back</a>
         </div>
 
         <form method="POST" action="/admin-ui/create-shipment">
@@ -35,17 +35,20 @@
             </h5>
 
             <div class="mb-4">
-                <label class="form-label fw-semibold">Select Application</label>
-                <select class="form-select" name="application_id" required>
-                    {% for app in applications %}
-                    {# FIX Bug 6: use app.application_id not app.id #}
-                    <option value="{{ app.application_id }}"
-                        {% if app.application_name == 'DeliveryHub' %}selected{% endif %}>
-                        {{ app.application_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>  {# FIX Bug: closing </div> was missing in the original #}
+    <label class="form-label fw-semibold">Application ID</label>
+
+    <select name="application_id" class="form-select" required>
+        {% for app in applications %}
+            <option
+    value="{{ app.application_id }}"
+    data-name="{{ app.application_name }}"
+    data-email="{{ app.user_email }}"
+    data-phone="{{ app.phone_number }}">
+    {{ app.application_name }} ({{ app.application_id[:8] }})
+</option>
+        {% endfor %}
+    </select>
+</div>
 
             <!-- ── SENDER DETAILS ── -->
             <h5 class="section-title">
@@ -248,6 +251,34 @@
         document.getElementById("receiver_phone_prefix").textContent = isUSA ? "+1" : "+91";
     });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const appSelect = document.querySelector("select[name='application_id']");
 
+    const senderName = document.querySelector("input[name='sender_name']");
+    const senderEmail = document.querySelector("input[name='sender_email']");
+    const senderPhone = document.querySelector("input[name='sender_phone']");
+
+    function autofillSender() {
+        const selected = appSelect.options[appSelect.selectedIndex];
+
+        const name = selected.getAttribute("data-name");
+        const email = selected.getAttribute("data-email");
+        const phone = selected.getAttribute("data-phone");
+
+        if (senderName && name) senderName.value = name;
+        if (senderEmail && email) senderEmail.value = email;
+
+        if (senderPhone && phone) {
+            senderPhone.value = phone.replace("+1", "").replace("+91", "").trim();
+        }
+    }
+
+    if (appSelect) {
+        appSelect.addEventListener("change", autofillSender);
+        autofillSender();
+    }
+});
+</script>
 </body>
 </html>
